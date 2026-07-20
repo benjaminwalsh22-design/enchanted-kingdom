@@ -362,6 +362,29 @@
   .rune-reveal .rsay{ font-size:32px; font-weight:900; margin-top:6px;
      background:linear-gradient(90deg,var(--magenta),var(--purple)); -webkit-background-clip:text;
      background-clip:text; color:transparent; }
+
+  /* ---------- Royal Gem Match (memory) ---------- */
+  #gemField{ position:relative; flex:1; overflow:hidden; display:grid; place-items:center;
+     background:radial-gradient(120% 80% at 50% -8%, rgba(255,255,255,.45), rgba(255,255,255,0) 55%),
+       linear-gradient(180deg,#ffe3f4 0%, #ffc0e6 46%, #d6b3ff 100%); }
+  .gem-grid{ display:grid; gap:min(2.4vw,18px); width:min(94vw,900px);
+     padding:16px; padding-top:calc(84px + env(safe-area-inset-top)); }
+  .gem-card{ aspect-ratio:3/4; perspective:800px; cursor:pointer; }
+  .gem-inner{ position:relative; width:100%; height:100%; transform-style:preserve-3d;
+     transition:transform .42s cubic-bezier(.2,1,.3,1); }
+  .gem-card.flipped .gem-inner{ transform:rotateY(180deg); }
+  .gem-face{ position:absolute; inset:0; display:grid; place-items:center; border-radius:20px;
+     backface-visibility:hidden; -webkit-backface-visibility:hidden;
+     border:3px solid rgba(255,255,255,.9); box-shadow:0 8px 18px rgba(150,90,180,.35); }
+  .gem-back{ font-size:min(9vw,46px); color:#ffe9a8;
+     background:radial-gradient(circle at 36% 26%, rgba(255,255,255,.6), transparent 55%),
+       linear-gradient(150deg,var(--violet),var(--purple)); }
+  .gem-front{ transform:rotateY(180deg); font-size:min(12vw,64px);
+     background:linear-gradient(160deg,#ffffff,#ffe9f6); }
+  .gem-card.matched .gem-front{ box-shadow:0 0 0 4px var(--gold), 0 8px 20px rgba(240,170,20,.5); }
+  .gem-card.matched .gem-inner{ animation:gemPop .5s ease; }
+  @keyframes gemPop{ 0%{transform:rotateY(180deg) scale(1)} 50%{transform:rotateY(180deg) scale(1.12)}
+     100%{transform:rotateY(180deg) scale(1)} }
 </style>
 </head>
 <body>
@@ -442,7 +465,7 @@ const GAMES = {
   /* --- Crystal Castle (coming soon, styled) --- */
   royalGemMatch:{ realm:"castle", title:"Royal Gem Match", tagline:"Find the matching jewels!",
     goal:"Memory · matching pairs", emoji:"💎",
-    tint:"linear-gradient(160deg,#ff8ccf,#ff2f95)", pearls:5, treasure:"treasureChest", playable:false },
+    tint:"linear-gradient(160deg,#ff8ccf,#ff2f95)", pearls:5, treasure:"treasureChest", playable:true },
   crownPatterns:{ realm:"castle", title:"Crown Jewels", tagline:"Make the pattern shine!",
     goal:"Repeating patterns · sequencing", emoji:"👑",
     tint:"linear-gradient(160deg,#ffab3d,#ff7a3d)", pearls:5, treasure:"treasureChest", playable:false },
@@ -1353,6 +1376,7 @@ function RuneTracingScreen(key){
 function launchGame(key){
   if(key === "countingClamBeds") return CountingGameScreen(key);
   if(key === "runeShellTracing") return RuneTracingScreen(key);
+  if(key === "royalGemMatch") return RoyalGemScreen(key);
   return GameScreen(key);            // bubbleSortReef
 }
 
@@ -1544,6 +1568,88 @@ function makePearlDraggable(p, opts){
   p.addEventListener("pointerdown", start);
 }
 
+/* ================================================================== */
+/* GAME — Royal Gem Match  (memory / matching pairs)                   */
+/* ================================================================== */
+/* Flip glossy jewel cards to find matching pairs. Matches stay up with a
+   sparkle; mismatches gently flip back after a beat. No timer, no fail.
+   Three gentle rounds: 3 → 4 → 5 pairs. */
+const GEM_FACES = ["💎","👑","💍","🔮","🗝️","⭐","🌟","🏵️"];
+const GEM_PAIRS = [3, 4, 5];
+
+function RoyalGemScreen(key){
+  let round = 0;
+
+  const s = el("div","screen");
+  const hud = el("div"); hud.id="gameHud";
+  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
+  const prompt = el("div","prompt","Find the matching jewels! 💎");
+  const dots = el("div","dots"); GEM_PAIRS.forEach(()=>dots.appendChild(el("i")));
+  hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
+  s.appendChild(hud);
+
+  const field = el("div"); field.id="gemField";
+  s.appendChild(field);
+
+  function updateDots(){ [...dots.children].forEach((d,i)=>d.classList.toggle("on", i<=round)); }
+
+  function layout(){
+    field.innerHTML="";
+    const pairs = GEM_PAIRS[round];
+    updateDots();
+
+    const faces = shuffle(GEM_FACES).slice(0, pairs);
+    const deck = shuffle(faces.concat(faces));   // each face twice
+
+    const grid = el("div","gem-grid");
+    grid.style.gridTemplateColumns = `repeat(${pairs}, 1fr)`;  // two rows
+    field.appendChild(grid);
+
+    let first = null, lock = false, matched = 0;
+
+    deck.forEach(face=>{
+      const card = el("div","gem-card");
+      card.innerHTML = `<div class="gem-inner">
+          <div class="gem-face gem-back">✨</div>
+          <div class="gem-face gem-front">${face}</div>
+        </div>`;
+      card.dataset.face = face;
+      card.onclick = ()=>{
+        if(lock || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+        Audio.unlock(); Audio.tap(); haptic(5);
+        card.classList.add("flipped");
+        if(!first){ first = card; return; }
+
+        // second card
+        if(card.dataset.face === first.dataset.face){
+          // match!
+          const a = first; first = null;
+          setTimeout(()=>{
+            a.classList.add("matched"); card.classList.add("matched");
+            Audio.chime(); haptic(10);
+            [a,card].forEach(c=>{ const r=c.getBoundingClientRect(); Sparkles.burst(r.left+r.width/2, r.top+r.height/2, 8, "⭐"); });
+            matched++;
+            if(matched >= pairs){
+              setTimeout(()=>{ if(round+1<GEM_PAIRS.length){ round++; layout(); } else finishGame(key); }, 800);
+            }
+          }, 260);
+        } else {
+          // not a match — gentle flip back
+          lock = true;
+          const a = first; first = null;
+          Audio.encourage(); haptic(10);
+          setTimeout(()=>{ a.classList.remove("flipped"); card.classList.remove("flipped"); lock=false; }, 950);
+        }
+      };
+      grid.appendChild(card);
+    });
+  }
+
+  requestAnimationFrame(layout);
+  return s;
+}
+
 /* ------------------------------------------------------------------ */
 /* BOOT                                                               */
 /* ------------------------------------------------------------------ */
@@ -1554,7 +1660,7 @@ window.addEventListener("pointerdown", ()=>Audio.unlock(), {once:true});
 // little burst of stars right under the finger (audio comes from the
 // element's own handler). The CSS :active squish handles the "bulge".
 document.addEventListener("pointerdown", (e)=>{
-  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam");
+  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card");
   if(t){ Sparkles.burst(e.clientX, e.clientY, 7, Math.random()<0.5 ? "⭐" : "✨"); }
 }, {passive:true});
 

@@ -22,7 +22,10 @@ iPad/iPhone Home Screen; it runs full-screen and works offline.
   - **Rune-Shell Tracing** — trace glowing letters (C, O, T, L) with a sparkle trail; hear the
     phonic sound and meet a sea creature (C is for Crab!). Early literacy + fine-motor.
   - **My Cove** — a decorator: earn treasures and drag them to style your reef.
-- 🏰 **Crystal Castle** (Princess Realm) — styled activity cards (coming soon).
+- 🏰 **Crystal Castle** (Princess Realm) — *playable*
+  - **Royal Gem Match** — flip glossy jewel cards to find matching pairs (memory / concentration),
+    three gentle rounds (3 → 4 → 5 pairs). No timer, no fail.
+  - **Crown Jewels** — pattern game (coming soon).
 - 🦄 **Enchanted Forest** (Unicorn Realm) — styled activity cards (coming soon).
 
 **Design for little hands:** jumbo touch targets, icon-first navigation, glossy
@@ -101,7 +104,7 @@ Requirements: Node 18+, Python 3 with Pillow (`pip install pillow`).
 
 ## 🗺️ Roadmap
 
-- Build a real Crystal Castle / Enchanted Forest game (e.g. Royal Gem Match memory).
+- Build the remaining games (Crown Jewels, Rainbow Bridge, Starflower Count).
 - More letters in Rune-Shell Tracing (and lowercase).
 - Quiet parent corner (mute + reset progress).
 - Optional service worker for guaranteed offline.
