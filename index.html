@@ -385,6 +385,35 @@
   .gem-card.matched .gem-inner{ animation:gemPop .5s ease; }
   @keyframes gemPop{ 0%{transform:rotateY(180deg) scale(1)} 50%{transform:rotateY(180deg) scale(1.12)}
      100%{transform:rotateY(180deg) scale(1)} }
+
+  /* ---------- Crown Jewels (patterns) ---------- */
+  #crownField{ position:relative; flex:1; overflow:hidden; display:flex; flex-direction:column;
+     align-items:center; justify-content:center; gap:min(7vh,60px);
+     padding-top:calc(70px + env(safe-area-inset-top));
+     background:radial-gradient(120% 80% at 50% -8%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%),
+       linear-gradient(180deg,#ffe7bd 0%, #ffc7e6 48%, #d9b8ff 100%); }
+  .necklace{ display:flex; align-items:center; gap:min(2vw,14px); flex-wrap:nowrap; max-width:96vw;
+     padding:16px 24px; background:rgba(255,255,255,.42); border-radius:999px;
+     box-shadow:0 10px 26px rgba(150,90,180,.3), inset 0 0 0 2px rgba(255,255,255,.5); }
+  .bead{ width:min(11vw,66px); height:min(11vw,66px); border-radius:50%; flex:0 0 auto;
+     background:radial-gradient(circle at 34% 28%, rgba(255,255,255,.9), rgba(255,255,255,0) 46%), var(--gem);
+     border:2px solid rgba(255,255,255,.75);
+     box-shadow:inset 0 -5px 9px rgba(0,0,0,.28), 0 4px 8px rgba(0,0,0,.2); }
+  .bead.slot{ background:rgba(255,255,255,.3); border:3px dashed var(--gold-deep); display:grid; place-items:center;
+     color:var(--gold-deep); font-weight:900; font-size:min(7vw,30px); box-shadow:none; animation:pulse 1.2s ease-in-out infinite; }
+  .bead.win{ animation:beadShine .7s ease; }
+  @keyframes beadShine{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.18);
+     box-shadow:inset 0 -5px 9px rgba(0,0,0,.28), 0 0 0 5px rgba(255,206,58,.7), 0 6px 12px rgba(240,170,20,.5); } }
+  .gem-options{ display:flex; gap:min(6vw,34px); }
+  .opt{ width:min(16vw,88px); height:min(16vw,88px); border-radius:50%; flex:0 0 auto; cursor:pointer;
+     background:radial-gradient(circle at 34% 28%, rgba(255,255,255,.9), rgba(255,255,255,0) 46%), var(--gem);
+     border:3px solid rgba(255,255,255,.85);
+     box-shadow:0 10px 18px rgba(120,60,160,.35), inset 0 -6px 11px rgba(0,0,0,.26);
+     transition:transform .12s; }
+  .opt:active{ transform:scale(.92); }
+  .opt.shake{ animation:shake .42s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-9px)}
+     50%{transform:translateX(9px)} 80%{transform:translateX(-5px)} }
 </style>
 </head>
 <body>
@@ -468,7 +497,7 @@ const GAMES = {
     tint:"linear-gradient(160deg,#ff8ccf,#ff2f95)", pearls:5, treasure:"treasureChest", playable:true },
   crownPatterns:{ realm:"castle", title:"Crown Jewels", tagline:"Make the pattern shine!",
     goal:"Repeating patterns · sequencing", emoji:"👑",
-    tint:"linear-gradient(160deg,#ffab3d,#ff7a3d)", pearls:5, treasure:"treasureChest", playable:false },
+    tint:"linear-gradient(160deg,#ffab3d,#ff7a3d)", pearls:5, treasure:"bubbleLantern", playable:true },
 
   /* --- Enchanted Forest (coming soon, styled) --- */
   rainbowBridge:{ realm:"forest", title:"Rainbow Bridge", tagline:"Guide the unicorn home!",
@@ -1377,6 +1406,7 @@ function launchGame(key){
   if(key === "countingClamBeds") return CountingGameScreen(key);
   if(key === "runeShellTracing") return RuneTracingScreen(key);
   if(key === "royalGemMatch") return RoyalGemScreen(key);
+  if(key === "crownPatterns") return CrownJewelsScreen(key);
   return GameScreen(key);            // bubbleSortReef
 }
 
@@ -1650,6 +1680,86 @@ function RoyalGemScreen(key){
   return s;
 }
 
+/* ================================================================== */
+/* GAME — Crown Jewels  (repeating patterns · sequencing)              */
+/* ================================================================== */
+/* A royal jewel necklace shows a repeating pattern with the last bead
+   missing (a glowing "?" slot). The child taps the gem that comes next.
+   Wrong taps shake gently and return (no fail); a correct tap fills the
+   slot and the whole necklace shines. Ramps AB → ABC → AAB → ABB. */
+const CROWN_GEMS = { ruby:"#ff3b6b", sapphire:"#3b7bff", emerald:"#22c55e", gold:"#ffca2e", amethyst:"#a24bff" };
+const CROWN_ROUNDS = [
+  { beads:["ruby","sapphire","ruby","sapphire","ruby"],     answer:"sapphire", options:["sapphire","ruby","gold"] },
+  { beads:["gold","amethyst","emerald","gold","amethyst"],  answer:"emerald",  options:["emerald","gold","amethyst"] },
+  { beads:["emerald","emerald","ruby","emerald","emerald"], answer:"ruby",     options:["ruby","emerald","sapphire"] },
+  { beads:["sapphire","gold","gold","sapphire","gold"],     answer:"gold",     options:["gold","sapphire","amethyst"] },
+];
+
+function CrownJewelsScreen(key){
+  let round = 0;
+
+  const s = el("div","screen");
+  const hud = el("div"); hud.id="gameHud";
+  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
+  const prompt = el("div","prompt","What comes next? 👑");
+  const dots = el("div","dots"); CROWN_ROUNDS.forEach(()=>dots.appendChild(el("i")));
+  hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
+  s.appendChild(hud);
+
+  const field = el("div"); field.id="crownField";
+  s.appendChild(field);
+
+  function updateDots(){ [...dots.children].forEach((d,i)=>d.classList.toggle("on", i<=round)); }
+  function bead(colorKey){ const d=el("div","bead"); d.style.setProperty("--gem", CROWN_GEMS[colorKey]); return d; }
+
+  function layout(){
+    field.innerHTML="";
+    const R = CROWN_ROUNDS[round];
+    prompt.textContent = "What comes next? 👑";
+    updateDots();
+
+    const necklace = el("div","necklace");
+    R.beads.forEach(k=> necklace.appendChild(bead(k)));
+    const slot = el("div","bead slot","?");
+    necklace.appendChild(slot);
+    field.appendChild(necklace);
+
+    const opts = el("div","gem-options");
+    let done = false;
+    shuffle(R.options).forEach(k=>{
+      const o = el("div","opt"); o.style.setProperty("--gem", CROWN_GEMS[k]);
+      o.onclick = ()=>{
+        if(done) return;
+        Audio.unlock();
+        if(k === R.answer){
+          done = true;
+          // fill the slot → it becomes a real bead and the necklace shines
+          slot.classList.remove("slot"); slot.textContent=""; slot.style.setProperty("--gem", CROWN_GEMS[k]);
+          Audio.chime(); haptic([8,30,8]);
+          const beads = [...necklace.querySelectorAll(".bead")];
+          beads.forEach((b,i)=> setTimeout(()=>{
+            b.classList.add("win");
+            const r=b.getBoundingClientRect(); Sparkles.burst(r.left+r.width/2, r.top+r.height/2, 5, "⭐");
+          }, i*70));
+          opts.style.opacity = "0";
+          setTimeout(()=>{ if(round+1<CROWN_ROUNDS.length){ round++; layout(); } else finishGame(key); }, 1300);
+        } else {
+          Audio.encourage(); haptic(12);
+          o.classList.add("shake");
+          setTimeout(()=>o.classList.remove("shake"), 430);
+        }
+      };
+      opts.appendChild(o);
+    });
+    opts.style.transition = "opacity .4s";
+    field.appendChild(opts);
+  }
+
+  requestAnimationFrame(layout);
+  return s;
+}
+
 /* ------------------------------------------------------------------ */
 /* BOOT                                                               */
 /* ------------------------------------------------------------------ */
@@ -1660,7 +1770,7 @@ window.addEventListener("pointerdown", ()=>Audio.unlock(), {once:true});
 // little burst of stars right under the finger (audio comes from the
 // element's own handler). The CSS :active squish handles the "bulge".
 document.addEventListener("pointerdown", (e)=>{
-  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card");
+  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card, .opt");
   if(t){ Sparkles.burst(e.clientX, e.clientY, 7, Math.random()<0.5 ? "⭐" : "✨"); }
 }, {passive:true});
 

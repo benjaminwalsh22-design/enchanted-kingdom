@@ -25,7 +25,8 @@ iPad/iPhone Home Screen; it runs full-screen and works offline.
 - 🏰 **Crystal Castle** (Princess Realm) — *playable*
   - **Royal Gem Match** — flip glossy jewel cards to find matching pairs (memory / concentration),
     three gentle rounds (3 → 4 → 5 pairs). No timer, no fail.
-  - **Crown Jewels** — pattern game (coming soon).
+  - **Crown Jewels** — tap the gem that continues a repeating jewel-necklace pattern
+    (AB → ABC → AAB → ABB). Early patterning / sequencing.
 - 🦄 **Enchanted Forest** (Unicorn Realm) — styled activity cards (coming soon).
 
 **Design for little hands:** jumbo touch targets, icon-first navigation, glossy
