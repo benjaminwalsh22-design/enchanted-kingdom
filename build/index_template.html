@@ -340,6 +340,28 @@
   .bigbtn{ background:
        radial-gradient(circle at 34% 22%, rgba(255,255,255,.55), transparent 52%),
        linear-gradient(135deg,var(--pink),var(--magenta)); }
+
+  /* ---------- Rune-Shell Tracing ---------- */
+  #runeField{ position:relative; flex:1; overflow:hidden; touch-action:none;
+     background:radial-gradient(120% 80% at 50% -8%, rgba(255,255,255,.35), rgba(255,255,255,0) 55%),
+       linear-gradient(180deg,#8ad6ff 0%, #6aa0ff 55%, #7b6cff 100%); }
+  .rune-svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .rune-letter-bg{ font-weight:900; fill:rgba(255,255,255,.22);
+     text-anchor:middle; dominant-baseline:central; }
+  .rune-guide{ fill:none; stroke:rgba(255,255,255,.5); stroke-width:16;
+     stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1 26; }
+  .rune-progress{ fill:none; stroke:#fff; stroke-width:20; stroke-linecap:round; stroke-linejoin:round;
+     filter:drop-shadow(0 0 7px rgba(255,255,255,.9)); }
+  .rune-start{ fill:#57e08a; stroke:#fff; stroke-width:4; animation:pulse 1.1s ease-in-out infinite; }
+  .rune-reveal{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+     opacity:0; transition:opacity .3s; }
+  .rune-reveal.show{ opacity:1; }
+  .rune-reveal .card2{ background:rgba(255,255,255,.94); border-radius:34px; padding:26px 40px; text-align:center;
+     box-shadow:0 20px 46px rgba(60,40,120,.45); animation:pop .45s cubic-bezier(.2,1.3,.4,1); }
+  .rune-reveal .rbig{ font-size:104px; line-height:1; filter:drop-shadow(0 6px 8px rgba(0,0,0,.18)); }
+  .rune-reveal .rsay{ font-size:32px; font-weight:900; margin-top:6px;
+     background:linear-gradient(90deg,var(--magenta),var(--purple)); -webkit-background-clip:text;
+     background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -415,7 +437,7 @@ const GAMES = {
     tint:"linear-gradient(160deg,#33e0ac,#0aa6a0)", pearls:5, treasure:"coralThrone", playable:true },
   runeShellTracing:{ realm:"cove", title:"Rune-Shell Tracing", tagline:"Trace the magic letters!",
     goal:"Letter sounds · tracing · phonics", emoji:"🔤",
-    tint:"linear-gradient(160deg,#7bb6ff,#4a7bff)", pearls:5, treasure:"anemoneGarden", playable:false },
+    tint:"linear-gradient(160deg,#7bb6ff,#4a7bff)", pearls:5, treasure:"anemoneGarden", playable:true },
 
   /* --- Crystal Castle (coming soon, styled) --- */
   royalGemMatch:{ realm:"castle", title:"Royal Gem Match", tagline:"Find the matching jewels!",
@@ -1163,11 +1185,174 @@ function bounce(node){
 }
 
 /* ================================================================== */
+/* GAME — Rune-Shell Tracing  (letter formation · phonics · literacy)  */
+/* ================================================================== */
+/* Each letter is one or more strokes given as normalized points (0..1,
+   y-down). The child traces along a glowing guide; a bright path reveals
+   as they go, with a sparkle trail. Forgiving: straying just pauses, never
+   fails. On completion the phonic sound is spoken and a sea creature whose
+   name starts with that letter appears (C is for Crab). */
+const RUNE_ROUNDS = [
+  { letter:"C", word:"Crab",    emoji:"🦀", phon:"Cuh",
+    strokes:[[[.72,.24],[.58,.14],[.42,.13],[.29,.22],[.21,.38],[.19,.55],[.26,.72],[.42,.85],[.60,.86],[.73,.78]]] },
+  { letter:"O", word:"Octopus", emoji:"🐙", phon:"Ah",
+    strokes:[[[.5,.12],[.66,.17],[.78,.3],[.83,.5],[.78,.7],[.66,.83],[.5,.88],[.34,.83],[.22,.7],[.17,.5],[.22,.3],[.34,.17],[.5,.12]]] },
+  { letter:"T", word:"Turtle",  emoji:"🐢", phon:"Tuh",
+    strokes:[ [[.22,.2],[.5,.2],[.78,.2]], [[.5,.2],[.5,.52],[.5,.84]] ] },
+  { letter:"L", word:"Lobster", emoji:"🦞", phon:"Luh",
+    strokes:[ [[.32,.14],[.32,.5],[.32,.83]], [[.32,.83],[.56,.83],[.8,.83]] ] },
+];
+
+function speak(text){
+  try{
+    if(!("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.8; u.pitch = 1.25;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* speech optional; visuals + chime always play */ }
+}
+
+function RuneTracingScreen(key){
+  let idx = 0;
+  const s = el("div","screen");
+  const hud = el("div"); hud.id="gameHud";
+  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
+  const prompt = el("div","prompt","");
+  const dots = el("div","dots"); RUNE_ROUNDS.forEach(()=>dots.appendChild(el("i")));
+  hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
+  s.appendChild(hud);
+
+  const field = el("div"); field.id="runeField";
+  s.appendChild(field);
+
+  function updateDots(){ [...dots.children].forEach((d,i)=>d.classList.toggle("on", i<=idx)); }
+
+  // nearest point on a polyline → {dist, t(0..1 along stroke)}
+  function project(pts, cum, total, px, py){
+    let best = { dist:Infinity, t:0 };
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i], b=pts[i+1];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const L2=dx*dx+dy*dy || 1e-6;
+      let u=((px-a.x)*dx+(py-a.y)*dy)/L2; u=Math.max(0,Math.min(1,u));
+      const cx=a.x+u*dx, cy=a.y+u*dy;
+      const d=Math.hypot(px-cx, py-cy);
+      if(d<best.dist){ best={ dist:d, t:(cum[i]+u*Math.hypot(dx,dy))/total }; }
+    }
+    return best;
+  }
+
+  function layout(){
+    field.innerHTML="";
+    const R = RUNE_ROUNDS[idx];
+    prompt.textContent = `Trace the letter ${R.letter}!`;
+    updateDots();
+
+    const fw = field.clientWidth || window.innerWidth;
+    const fh = field.clientHeight || (window.innerHeight-120);
+    const D  = Math.min(fw, fh) * 0.6;
+    const bx = fw/2 - D/2, by = fh/2 - D/2;
+    const tol = Math.max(44, D*0.17);
+    const toPx = (n)=>({ x:bx + n[0]*D, y:by + n[1]*D });
+
+    // Build stroke geometry (px points + cumulative lengths)
+    const strokes = R.strokes.map(sp=>{
+      const pts = sp.map(toPx);
+      const cum=[0]; let total=0;
+      for(let i=1;i<pts.length;i++){ total+=Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y); cum.push(total); }
+      const d = "M " + pts.map(p=>`${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" L ");
+      return { pts, cum, total, d, start:pts[0] };
+    });
+
+    // SVG: faint letter backdrop + per-stroke guide & progress + start dot
+    let svg = `<svg class="rune-svg" viewBox="0 0 ${fw} ${fh}" xmlns="http://www.w3.org/2000/svg">
+      <text class="rune-letter-bg" x="${fw/2}" y="${fh/2}" font-size="${D*1.02}">${R.letter}</text>`;
+    strokes.forEach((st,i)=>{ svg += `<path class="rune-guide" d="${st.d}"/>`; });
+    strokes.forEach((st,i)=>{ svg += `<path class="rune-progress" id="rp${i}" d="${st.d}"/>`; });
+    svg += `<circle class="rune-start" id="rstart" cx="${strokes[0].start.x}" cy="${strokes[0].start.y}" r="16"/></svg>`;
+    field.innerHTML = svg;
+
+    const reveal = el("div","rune-reveal", `<div class="card2"><div class="rbig"></div><div class="rsay"></div></div>`);
+    field.appendChild(reveal);
+
+    // hide all progress paths initially
+    const progEls = strokes.map((_,i)=>field.querySelector("#rp"+i));
+    progEls.forEach(p=>{ const L=p.getTotalLength(); p.style.strokeDasharray=L; p.style.strokeDashoffset=L; p.dataset.len=L; });
+    const startDot = field.querySelector("#rstart");
+
+    let strokeIdx=0, reached=0, tracing=false, lastSparkle=0;
+
+    function setProgress(){
+      const p=progEls[strokeIdx], L=parseFloat(p.dataset.len);
+      p.style.strokeDashoffset = L*(1-reached);
+    }
+    function moveStartDot(){
+      if(strokeIdx<strokes.length){ startDot.style.display=""; startDot.setAttribute("cx",strokes[strokeIdx].start.x); startDot.setAttribute("cy",strokes[strokeIdx].start.y); }
+      else startDot.style.display="none";
+    }
+    function completeStroke(){
+      reached=1; setProgress();
+      strokeIdx++;
+      if(strokeIdx<strokes.length){ reached=0; moveStartDot(); }
+      else { startDot.style.display="none"; letterDone(); }
+    }
+    function letterDone(){
+      Audio.chime(); haptic([8,30,8]);
+      speak(`${R.letter}. ${R.word}`);
+      reveal.querySelector(".rbig").textContent = R.emoji;
+      reveal.querySelector(".rsay").textContent = `${R.letter} is for ${R.word}!`;
+      reveal.classList.add("show");
+      const fr=field.getBoundingClientRect();
+      Sparkles.burst(fr.left+fr.width/2, fr.top+fr.height*0.4, 18, "⭐");
+      setTimeout(()=>{
+        if(idx+1<RUNE_ROUNDS.length){ idx++; layout(); }
+        else finishGame(key);
+      }, 1900);
+    }
+
+    function localPt(e){ const r=field.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+
+    field.addEventListener("pointerdown", e=>{
+      if(strokeIdx>=strokes.length) return;
+      const p=localPt(e); const st=strokes[strokeIdx];
+      const dStart=Math.hypot(p.x-st.start.x, p.y-st.start.y);
+      const pr=project(st.pts, st.cum, st.total, p.x, p.y);
+      if(dStart < tol*1.3 || pr.dist < tol){
+        tracing=true; field.setPointerCapture(e.pointerId);
+        Audio.unlock(); Audio.tap(); haptic(5);
+      }
+    });
+    field.addEventListener("pointermove", e=>{
+      if(!tracing || strokeIdx>=strokes.length) return;
+      const p=localPt(e); const st=strokes[strokeIdx];
+      const pr=project(st.pts, st.cum, st.total, p.x, p.y);
+      if(pr.dist <= tol && pr.t > reached){
+        reached = pr.t; setProgress();
+        const now=e.timeStamp||0;
+        if(now-lastSparkle>60){ lastSparkle=now; Sparkles.burst(e.clientX, e.clientY, 3, Math.random()<.5?"✨":"⭐"); }
+        if(reached >= 0.9) completeStroke();
+      }
+    });
+    function endTrace(){ tracing=false; }
+    field.addEventListener("pointerup", endTrace);
+    field.addEventListener("pointercancel", endTrace);
+
+    moveStartDot();
+  }
+
+  requestAnimationFrame(layout);
+  return s;
+}
+
+/* ================================================================== */
 /* GAME — Counting Clam Beds  (addition & subtraction by grouping)     */
 /* ================================================================== */
 /* Dispatches map taps to the right playable game. */
 function launchGame(key){
   if(key === "countingClamBeds") return CountingGameScreen(key);
+  if(key === "runeShellTracing") return RuneTracingScreen(key);
   return GameScreen(key);            // bubbleSortReef
 }
 
