@@ -140,12 +140,13 @@
   #gameHud{ position:absolute; top:0; left:0; right:0; z-index:20;
      display:flex; align-items:flex-start; gap:12px; padding:16px 18px;
      padding-top:calc(16px + env(safe-area-inset-top)); pointer-events:none; }
-  #gameHud .iconbtn{ pointer-events:auto; }
-  .prompt{ margin:0 auto; background:rgba(255,255,255,.82); border-radius:999px;
-     padding:12px 22px; font-size:clamp(18px,3.6vw,24px); font-weight:900;
+  #gameHud .iconbtn, #gameHud .bubble-btn{ pointer-events:auto; flex:0 0 auto; }
+  .prompt{ margin:0 auto; min-width:0; max-width:min(62vw,600px);
+     background:rgba(255,255,255,.85); border-radius:999px;
+     padding:12px 22px; font-size:clamp(17px,3.4vw,24px); font-weight:900;
      box-shadow:0 6px 14px rgba(180,150,220,.4); text-align:center; }
   .dots{ display:flex; gap:8px; align-items:center; background:rgba(255,255,255,.5);
-     padding:10px 14px; border-radius:999px; }
+     padding:10px 14px; border-radius:999px; flex:0 0 auto; align-self:center; }
   .dots i{ width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,.7);
      border:1.5px solid #fff; display:block; transition:all .3s; }
   .dots i.on{ background:var(--bubblegum); transform:scale(1.2); }
@@ -1033,7 +1034,7 @@ function makeCoveDraggable(node, t, canvas){
 function SoonScreen(key){
   const g=GAMES[key];
   const s=el("div","screen");
-  const back=el("button","iconbtn backfloat","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable backfloat","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   s.appendChild(back);
   const body=el("div","body");
@@ -1115,6 +1116,15 @@ function buildRounds(){
       baskets:[{id:"answer",label:"Here!",color:"#a870db",answer:true}],
       preview, creatures:cands, need:1, correct:cr=>cr.id===answer.id?"answer":null });
   }
+  // 5) PATTERN  (A B C A B ? -> answer C/gold) — a harder 3-colour pattern
+  {
+    const preview=["pink","blue","gold","pink","blue"];
+    const answer={id:uid(),color:"gold",shape:"star",size:"big"};
+    const cands=shuffle([answer,{id:uid(),color:"pink",shape:"star",size:"big"},{id:uid(),color:"blue",shape:"star",size:"big"}]);
+    rounds.push({ kind:"pattern", prompt:"What comes next? 🔁",
+      baskets:[{id:"answer",label:"Here!",color:"#a870db",answer:true}],
+      preview, creatures:cands, need:1, correct:cr=>cr.id===answer.id?"answer":null });
+  }
   return rounds;
 }
 
@@ -1125,7 +1135,7 @@ function GameScreen(key){
   const s=el("div","screen");
   // HUD
   const hud=el("div"); hud.id="gameHud";
-  const back=el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   const prompt=el("div","prompt","");
   const dots=el("div","dots");
@@ -1289,7 +1299,8 @@ function bounce(node){
    as they go, with a sparkle trail. Forgiving: straying just pauses, never
    fails. On completion the phonic sound is spoken and a sea creature whose
    name starts with that letter appears (C is for Crab). */
-const RUNE_ROUNDS = [
+/* A pool of sea-themed letters; each play traces a random 5 of them. */
+const RUNE_POOL = [
   { letter:"C", word:"Crab",    emoji:"🦀", phon:"Cuh",
     strokes:[[[.72,.24],[.58,.14],[.42,.13],[.29,.22],[.21,.38],[.19,.55],[.26,.72],[.42,.85],[.60,.86],[.73,.78]]] },
   { letter:"O", word:"Octopus", emoji:"🐙", phon:"Ah",
@@ -1298,6 +1309,14 @@ const RUNE_ROUNDS = [
     strokes:[ [[.22,.2],[.5,.2],[.78,.2]], [[.5,.2],[.5,.52],[.5,.84]] ] },
   { letter:"L", word:"Lobster", emoji:"🦞", phon:"Luh",
     strokes:[ [[.32,.14],[.32,.5],[.32,.83]], [[.32,.83],[.56,.83],[.8,.83]] ] },
+  { letter:"S", word:"Seal",    emoji:"🦭", phon:"Sss",
+    strokes:[[[.70,.28],[.52,.18],[.34,.24],[.32,.40],[.50,.50],[.68,.60],[.66,.76],[.48,.84],[.30,.76]]] },
+  { letter:"W", word:"Whale",   emoji:"🐳", phon:"Wuh",
+    strokes:[[[.18,.2],[.34,.82],[.5,.4],[.66,.82],[.82,.2]]] },
+  { letter:"F", word:"Fish",    emoji:"🐟", phon:"Fff",
+    strokes:[ [[.34,.16],[.34,.5],[.34,.84]], [[.34,.18],[.72,.18]], [[.34,.5],[.64,.5]] ] },
+  { letter:"P", word:"Penguin", emoji:"🐧", phon:"Puh",
+    strokes:[ [[.34,.16],[.34,.84]], [[.34,.18],[.60,.22],[.66,.38],[.5,.5],[.34,.5]] ] },
 ];
 
 function speak(text){
@@ -1311,13 +1330,14 @@ function speak(text){
 }
 
 function RuneTracingScreen(key){
+  const rounds = shuffle(RUNE_POOL).slice(0, 5);   // random 5 letters this play
   let idx = 0;
   const s = el("div","screen");
   const hud = el("div"); hud.id="gameHud";
-  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   const prompt = el("div","prompt","");
-  const dots = el("div","dots"); RUNE_ROUNDS.forEach(()=>dots.appendChild(el("i")));
+  const dots = el("div","dots"); rounds.forEach(()=>dots.appendChild(el("i")));
   hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
   s.appendChild(hud);
 
@@ -1343,7 +1363,7 @@ function RuneTracingScreen(key){
 
   function layout(){
     field.innerHTML="";
-    const R = RUNE_ROUNDS[idx];
+    const R = rounds[idx];
     prompt.textContent = `Trace the letter ${R.letter}!`;
     updateDots();
 
@@ -1404,7 +1424,7 @@ function RuneTracingScreen(key){
       const fr=field.getBoundingClientRect();
       Sparkles.burst(fr.left+fr.width/2, fr.top+fr.height*0.4, 18, "⭐");
       setTimeout(()=>{
-        if(idx+1<RUNE_ROUNDS.length){ idx++; layout(); }
+        if(idx+1<rounds.length){ idx++; layout(); }
         else finishGame(key);
       }, 1900);
     }
@@ -1458,13 +1478,29 @@ function launchGame(key){
 }
 
 /* Gentle ramp, all totals within 5 (Pre-K appropriate). */
+/* A pool of gentle problems (sums & differences within 10). Each play mixes
+   a random 5 — a couple of "add" first, then the rest shuffled. */
 function buildClamRounds(){
-  return [
-    { kind:"add", a:2, b:1, story:"Marina has 2 pearls. Tap the clam to find more! 🐚" },
+  const adds = [
+    { kind:"add", a:2, b:1, story:"Marina has 2 pearls. Tap the clam to find 1 more! 🐚" },
     { kind:"add", a:3, b:2, story:"3 pearls here — tap the clam for 2 more to add! ➕" },
+    { kind:"add", a:1, b:4, story:"Marina has 1 pearl. Tap the clam for 4 more! 🐚" },
+    { kind:"add", a:4, b:3, story:"4 pearls here — tap the clam for 3 more to add! ➕" },
+    { kind:"add", a:5, b:2, story:"5 pearls! Tap the clam for 2 more to add! 🐚" },
+    { kind:"add", a:2, b:4, story:"2 pearls here — tap the clam for 4 more! ➕" },
+  ];
+  const subs = [
     { kind:"sub", n:5, k:2, story:"5 pearls! 2 are sleepy 💤 — take them to the nap shell." },
     { kind:"sub", n:4, k:1, story:"4 pearls! 1 is sleepy 💤 — take it to the nap shell." },
+    { kind:"sub", n:6, k:2, story:"6 pearls! 2 are sleepy 💤 — take them to the nap shell." },
+    { kind:"sub", n:5, k:3, story:"5 pearls! 3 are sleepy 💤 — take them to the nap shell." },
+    { kind:"sub", n:7, k:3, story:"7 pearls! 3 are sleepy 💤 — take them to the nap shell." },
+    { kind:"sub", n:6, k:4, story:"6 pearls! 4 are sleepy 💤 — take them to the nap shell." },
   ];
+  // Start with 2 adds (gentle), then 3 more from the rest, shuffled.
+  const firstTwo = shuffle(adds).slice(0, 2);
+  const rest = shuffle(adds.filter(a=>!firstTwo.includes(a)).concat(subs)).slice(0, 3);
+  return firstTwo.concat(shuffle(rest));
 }
 
 function CountingGameScreen(key){
@@ -1473,7 +1509,7 @@ function CountingGameScreen(key){
 
   const s = el("div","screen");
   const hud = el("div"); hud.id = "gameHud";
-  const back = el("button","iconbtn","‹"); back.style.background = "var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick = ()=>{ Audio.swoosh(); backToRealm(); };
   const prompt = el("div","prompt","");
   const dots = el("div","dots"); rounds.forEach(()=>dots.appendChild(el("i")));
@@ -1652,14 +1688,14 @@ function makePearlDraggable(p, opts){
    sparkle; mismatches gently flip back after a beat. No timer, no fail.
    Three gentle rounds: 3 → 4 → 5 pairs. */
 const GEM_FACES = ["💎","👑","💍","🔮","🗝️","⭐","🌟","🏵️"];
-const GEM_PAIRS = [3, 4, 5];
-
 function RoyalGemScreen(key){
+  // Three rounds of increasing size, drawn from {3,4,5,6} pairs, ascending.
+  const GEM_PAIRS = shuffle([3,4,5,6]).slice(0, 3).sort((a,b)=>a-b);
   let round = 0;
 
   const s = el("div","screen");
   const hud = el("div"); hud.id="gameHud";
-  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   const prompt = el("div","prompt","Find the matching jewels! 💎");
   const dots = el("div","dots"); GEM_PAIRS.forEach(()=>dots.appendChild(el("i")));
@@ -1735,19 +1771,25 @@ function RoyalGemScreen(key){
    Wrong taps shake gently and return (no fail); a correct tap fills the
    slot and the whole necklace shines. Ramps AB → ABC → AAB → ABB. */
 const CROWN_GEMS = { ruby:"#ff3b6b", sapphire:"#3b7bff", emerald:"#22c55e", gold:"#ffca2e", amethyst:"#a24bff" };
-const CROWN_ROUNDS = [
-  { beads:["ruby","sapphire","ruby","sapphire","ruby"],     answer:"sapphire", options:["sapphire","ruby","gold"] },
-  { beads:["gold","amethyst","emerald","gold","amethyst"],  answer:"emerald",  options:["emerald","gold","amethyst"] },
-  { beads:["emerald","emerald","ruby","emerald","emerald"], answer:"ruby",     options:["ruby","emerald","sapphire"] },
-  { beads:["sapphire","gold","gold","sapphire","gold"],     answer:"gold",     options:["gold","sapphire","amethyst"] },
+/* Pattern pool (AB, ABC, AAB, ABB, AABB…). Each play uses a random 5. */
+const CROWN_POOL = [
+  { beads:["ruby","sapphire","ruby","sapphire","ruby"],       answer:"sapphire", options:["sapphire","ruby","gold"] },
+  { beads:["gold","amethyst","emerald","gold","amethyst"],    answer:"emerald",  options:["emerald","gold","amethyst"] },
+  { beads:["emerald","emerald","ruby","emerald","emerald"],   answer:"ruby",     options:["ruby","emerald","sapphire"] },
+  { beads:["sapphire","gold","gold","sapphire","gold"],       answer:"gold",     options:["gold","sapphire","amethyst"] },
+  { beads:["ruby","gold","ruby","gold","ruby"],               answer:"gold",     options:["gold","ruby","emerald"] },
+  { beads:["amethyst","emerald","sapphire","amethyst","emerald"], answer:"sapphire", options:["sapphire","amethyst","emerald"] },
+  { beads:["ruby","ruby","gold","gold","ruby"],               answer:"ruby",     options:["ruby","gold","sapphire"] },
+  { beads:["emerald","amethyst","amethyst","emerald","amethyst"], answer:"amethyst", options:["amethyst","emerald","gold"] },
 ];
 
 function CrownJewelsScreen(key){
+  const CROWN_ROUNDS = shuffle(CROWN_POOL).slice(0, 5);   // random 5 patterns this play
   let round = 0;
 
   const s = el("div","screen");
   const hud = el("div"); hud.id="gameHud";
-  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   const prompt = el("div","prompt","What comes next? 👑");
   const dots = el("div","dots"); CROWN_ROUNDS.forEach(()=>dots.appendChild(el("i")));
@@ -1813,6 +1855,7 @@ function CrownJewelsScreen(key){
 /* Hop the unicorn tile-by-tile along the grassy rainbow path to the
    castle, hopping around puddles. Valid next tiles gently glow; tapping
    a puddle just splashes (no move, no fail). 3 hand-made solvable mazes. */
+/* Maze pool (all start top-left 'S'); each play uses a random 3. */
 const MAZES = [
   ["S.##",
    "#.##",
@@ -1827,16 +1870,26 @@ const MAZES = [
    "#...#",
    "#.###",
    "#...G"],
+  ["S#..",
+   ".#..",
+   "....",
+   "###G"],
+  ["S....",
+   "####.",
+   ".....",
+   ".####",
+   "....G"],
 ];
 
 function RainbowBridgeScreen(key){
+  const mazes = shuffle(MAZES).slice(0, 3);          // random 3 mazes this play
   let round = 0;
   const s = el("div","screen");
   const hud = el("div"); hud.id="gameHud";
-  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   const prompt = el("div","prompt","Hop to the castle! 🦄");
-  const dots = el("div","dots"); MAZES.forEach(()=>dots.appendChild(el("i")));
+  const dots = el("div","dots"); mazes.forEach(()=>dots.appendChild(el("i")));
   hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
   s.appendChild(hud);
 
@@ -1848,7 +1901,7 @@ function RainbowBridgeScreen(key){
   function layout(){
     field.innerHTML="";
     updateDots();
-    const grid0 = MAZES[round];
+    const grid0 = mazes[round];
     const rows = grid0.length, cols = grid0[0].length;
     let start={r:0,c:0}, goal={r:0,c:0};
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
@@ -1908,7 +1961,7 @@ function RainbowBridgeScreen(key){
         Object.values(cellEls).forEach(x=>x.classList.remove("next"));
         Audio.fanfare(); haptic([8,30,8]);
         Sparkles.burst(rect.left+rect.width/2, rect.top+rect.height/2, 16, "⭐");
-        setTimeout(()=>{ if(round+1<MAZES.length){ round++; layout(); } else finishGame(key); }, 1100);
+        setTimeout(()=>{ if(round+1<mazes.length){ round++; layout(); } else finishGame(key); }, 1100);
       } else {
         highlightNext();
       }
@@ -1927,14 +1980,16 @@ function RainbowBridgeScreen(key){
 /* A meadow blooms with N starflowers. Tap each to count it (the number
    is spoken as it blooms), then tap the numeral card that matches how
    many there are. Wrong cards shake gently; there is no fail. */
-const STAR_COUNTS = [3, 4, 5, 6];
+const STAR_POOL = [3, 4, 5, 6, 7, 8];
 const STAR_BLOOMS = ["🌸","🌼","🌷","🌺","💐","🌻"];
 
 function StarflowerScreen(key){
+  // Random 5 counts this play, gently ascending
+  const STAR_COUNTS = shuffle(STAR_POOL).slice(0, 5).sort((a,b)=>a-b);
   let round = 0;
   const s = el("div","screen");
   const hud = el("div"); hud.id="gameHud";
-  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  const back = el("button","bubble-btn tappable","‹");
   back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
   const prompt = el("div","prompt","How many flowers? 🌸");
   const dots = el("div","dots"); STAR_COUNTS.forEach(()=>dots.appendChild(el("i")));

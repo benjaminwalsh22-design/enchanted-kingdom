@@ -19,8 +19,9 @@ iPad/iPhone Home Screen; it runs full-screen and works offline.
 - 🐚 **Coral Cove** (Mermaid Realm) — *playable*
   - **Bubble Sort Reef** — sort sea friends by colour → shape → size, then continue a pattern.
   - **Counting Clam Beds** — tap clams for pearls; add & subtract by grouping in Marina's basket.
-  - **Rune-Shell Tracing** — trace glowing letters (C, O, T, L) with a sparkle trail; hear the
-    phonic sound and meet a sea creature (C is for Crab!). Early literacy + fine-motor.
+  - **Rune-Shell Tracing** — trace glowing letters (a fresh random 5 from C, O, T, L, S, W, F, P
+    each play) with a sparkle trail; hear the phonic sound and meet a sea creature (C is for Crab!).
+    Early literacy + fine-motor.
   - **My Cove** — a decorator: earn treasures and drag them to style your reef.
 - 🏰 **Crystal Castle** (Princess Realm) — *playable*
   - **Royal Gem Match** — flip glossy jewel cards to find matching pairs (memory / concentration),
@@ -34,6 +35,10 @@ iPad/iPhone Home Screen; it runs full-screen and works offline.
     tap the matching numeral card. Counting + numeral recognition.
 
 **All three realms are now playable — seven mini-games in total.** 🎉
+
+Every game draws a **fresh random set of levels** from a larger pool each play
+(different letters, patterns, mazes, counts and problems), so it stays
+interesting on repeat visits.
 
 **Design for little hands:** jumbo touch targets, icon-first navigation, glossy
 "bubble" buttons that squish and burst with stars on every tap, gentle chimes,
