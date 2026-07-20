@@ -27,7 +27,13 @@ iPad/iPhone Home Screen; it runs full-screen and works offline.
     three gentle rounds (3 → 4 → 5 pairs). No timer, no fail.
   - **Crown Jewels** — tap the gem that continues a repeating jewel-necklace pattern
     (AB → ABC → AAB → ABB). Early patterning / sequencing.
-- 🦄 **Enchanted Forest** (Unicorn Realm) — styled activity cards (coming soon).
+- 🦄 **Enchanted Forest** (Unicorn Realm) — *playable*
+  - **Rainbow Bridge** — hop the unicorn tile-by-tile along the grassy path to the castle,
+    around the puddles. Valid tiles glow; puddles just splash. Mazes / spatial reasoning.
+  - **Starflower Count** — tap glowing flowers to count them (the number is spoken), then
+    tap the matching numeral card. Counting + numeral recognition.
+
+**All three realms are now playable — seven mini-games in total.** 🎉
 
 **Design for little hands:** jumbo touch targets, icon-first navigation, glossy
 "bubble" buttons that squish and burst with stars on every tap, gentle chimes,
@@ -105,9 +111,8 @@ Requirements: Node 18+, Python 3 with Pillow (`pip install pillow`).
 
 ## 🗺️ Roadmap
 
-- Build the remaining games (Crown Jewels, Rainbow Bridge, Starflower Count).
-- More letters in Rune-Shell Tracing (and lowercase).
 - Quiet parent corner (mute + reset progress).
+- More letters in Rune-Shell Tracing (and lowercase); harder maze/pattern levels.
 - Optional service worker for guaranteed offline.
 
 ## 📄 License

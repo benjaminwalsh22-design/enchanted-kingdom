@@ -414,6 +414,49 @@
   .opt.shake{ animation:shake .42s; }
   @keyframes shake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-9px)}
      50%{transform:translateX(9px)} 80%{transform:translateX(-5px)} }
+
+  /* ---------- Rainbow Bridge (maze) ---------- */
+  #mazeField{ position:relative; flex:1; overflow:hidden; display:grid; place-items:center;
+     padding-top:calc(70px + env(safe-area-inset-top));
+     background:radial-gradient(120% 80% at 50% -8%, rgba(255,255,255,.4), rgba(255,255,255,0) 55%),
+       linear-gradient(180deg,#efe0ff 0%, #e6e9ff 45%, #d7ffe6 100%); }
+  .maze-grid{ display:grid; gap:min(1.6vw,10px); padding:14px; background:rgba(255,255,255,.35);
+     border-radius:28px; box-shadow:0 12px 30px rgba(90,50,160,.28); }
+  .maze-cell{ width:min(15vw,86px); height:min(15vw,86px); border-radius:18px; position:relative;
+     display:grid; place-items:center; font-size:min(9vw,48px); }
+  .maze-cell.path{ background:linear-gradient(160deg,#c9ffd8,#8fe36a); box-shadow:inset 0 -4px 8px rgba(0,0,0,.12); cursor:pointer; }
+  .maze-cell.puddle{ background:linear-gradient(160deg,#a9c6ff,#5a86e0); box-shadow:inset 0 4px 8px rgba(0,0,0,.25); }
+  .maze-cell.goal{ background:linear-gradient(160deg,#ffe6a8,#ffc24d); box-shadow:inset 0 -4px 8px rgba(0,0,0,.15); }
+  .maze-cell.next{ animation:pulse 1.1s ease-in-out infinite; box-shadow:inset 0 0 0 3px rgba(87,224,138,.9), 0 0 10px rgba(87,224,138,.6); cursor:pointer; }
+  .maze-cell.splash{ animation:shake .4s; }
+  .unicorn{ position:absolute; z-index:5; font-size:min(11vw,54px); pointer-events:none;
+     transition:left .18s ease, top .18s ease; transform:translate(-50%,-50%);
+     filter:drop-shadow(0 4px 5px rgba(0,0,0,.25)); }
+  .uni-hop{ animation:hop .32s ease; }
+  @keyframes hop{ 0%,100%{ transform:translate(-50%,-50%) scale(1) } 50%{ transform:translate(-50%,-60%) scale(1.12) } }
+
+  /* ---------- Starflower Count ---------- */
+  #starField{ position:relative; flex:1; overflow:hidden; display:flex; flex-direction:column;
+     align-items:center; justify-content:space-between;
+     padding:calc(74px + env(safe-area-inset-top)) 4vw 4vh;
+     background:radial-gradient(120% 80% at 50% -8%, rgba(255,255,255,.4), rgba(255,255,255,0) 55%),
+       linear-gradient(180deg,#eaf7ff 0%, #dcffe9 55%, #b7f0c6 100%); }
+  .meadow{ position:relative; flex:1; width:100%; }
+  .flower{ position:absolute; font-size:min(12vw,66px); cursor:pointer; transform:translate(-50%,-50%) scale(.86);
+     filter:drop-shadow(0 4px 6px rgba(0,0,0,.18)) grayscale(.25); transition:transform .2s, filter .2s; }
+  .flower.bloomed{ transform:translate(-50%,-50%) scale(1.1); filter:drop-shadow(0 5px 8px rgba(0,0,0,.2)) grayscale(0); }
+  .numrow{ display:flex; gap:min(6vw,32px); padding-bottom:6px; }
+  .numcard{ width:min(20vw,108px); height:min(22vw,120px); border-radius:26px; cursor:pointer;
+     display:grid; place-items:center; font-size:min(13vw,68px); font-weight:900; color:#fff;
+     background:radial-gradient(circle at 36% 26%, rgba(255,255,255,.5), transparent 55%),
+       linear-gradient(160deg,#8fd94f,#2fa35a);
+     border:4px solid rgba(255,255,255,.85); box-shadow:0 12px 22px rgba(40,140,80,.4);
+     text-shadow:0 2px 6px rgba(0,0,0,.25); transition:transform .12s; }
+  .numcard:active{ transform:scale(.93); }
+  .numcard.shake{ animation:shake .42s; }
+  .count-bubble{ position:absolute; top:6px; left:50%; transform:translateX(-50%);
+     background:rgba(255,255,255,.85); border-radius:999px; padding:6px 18px; font-weight:900;
+     font-size:clamp(18px,3.4vw,24px); color:var(--ink); box-shadow:0 6px 14px rgba(40,140,80,.28); }
 </style>
 </head>
 <body>
@@ -467,6 +510,8 @@ const TREASURES = {
   treasureChest:  {name:"Treasure Chest",   emoji:"🧰", tint:"#ffd66b"},
   seaStar:        {name:"Sea Star",         emoji:"⭐", tint:"#ffb8d2"},
   bubbleLantern:  {name:"Bubble Lantern",   emoji:"🏮", tint:"#ffeeb3"},
+  rainbowGem:     {name:"Rainbow Gem",      emoji:"🌈", tint:"#c6f0ff"},
+  starFlower:     {name:"Star Flower",      emoji:"🌸", tint:"#ffd6ec"},
 };
 
 /* Three realms of the Enchanted Kingdom. Each has an accent gradient + icon. */
@@ -502,10 +547,10 @@ const GAMES = {
   /* --- Enchanted Forest (coming soon, styled) --- */
   rainbowBridge:{ realm:"forest", title:"Rainbow Bridge", tagline:"Guide the unicorn home!",
     goal:"Mazes · spatial reasoning", emoji:"🌈",
-    tint:"linear-gradient(160deg,#a15bff,#7b3ff5)", pearls:5, treasure:"seaStar", playable:false },
+    tint:"linear-gradient(160deg,#a15bff,#7b3ff5)", pearls:5, treasure:"rainbowGem", playable:true },
   starflowerCount:{ realm:"forest", title:"Starflower Count", tagline:"Count the glowing blooms!",
     goal:"Counting · number sense", emoji:"🌸",
-    tint:"linear-gradient(160deg,#57cf3f,#2aa870)", pearls:5, treasure:"seaStar", playable:false },
+    tint:"linear-gradient(160deg,#57cf3f,#2aa870)", pearls:5, treasure:"starFlower", playable:true },
 };
 
 /* ------------------------------------------------------------------ */
@@ -1407,6 +1452,8 @@ function launchGame(key){
   if(key === "runeShellTracing") return RuneTracingScreen(key);
   if(key === "royalGemMatch") return RoyalGemScreen(key);
   if(key === "crownPatterns") return CrownJewelsScreen(key);
+  if(key === "rainbowBridge") return RainbowBridgeScreen(key);
+  if(key === "starflowerCount") return StarflowerScreen(key);
   return GameScreen(key);            // bubbleSortReef
 }
 
@@ -1760,6 +1807,208 @@ function CrownJewelsScreen(key){
   return s;
 }
 
+/* ================================================================== */
+/* GAME — Rainbow Bridge  (maze · spatial reasoning)                   */
+/* ================================================================== */
+/* Hop the unicorn tile-by-tile along the grassy rainbow path to the
+   castle, hopping around puddles. Valid next tiles gently glow; tapping
+   a puddle just splashes (no move, no fail). 3 hand-made solvable mazes. */
+const MAZES = [
+  ["S.##",
+   "#.##",
+   "#...",
+   "###G"],
+  ["S..#",
+   "##.#",
+   "#..#",
+   "#.G#"],
+  ["S...#",
+   "###.#",
+   "#...#",
+   "#.###",
+   "#...G"],
+];
+
+function RainbowBridgeScreen(key){
+  let round = 0;
+  const s = el("div","screen");
+  const hud = el("div"); hud.id="gameHud";
+  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
+  const prompt = el("div","prompt","Hop to the castle! 🦄");
+  const dots = el("div","dots"); MAZES.forEach(()=>dots.appendChild(el("i")));
+  hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
+  s.appendChild(hud);
+
+  const field = el("div"); field.id="mazeField";
+  s.appendChild(field);
+
+  function updateDots(){ [...dots.children].forEach((d,i)=>d.classList.toggle("on", i<=round)); }
+
+  function layout(){
+    field.innerHTML="";
+    updateDots();
+    const grid0 = MAZES[round];
+    const rows = grid0.length, cols = grid0[0].length;
+    let start={r:0,c:0}, goal={r:0,c:0};
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      const ch=grid0[r][c]; if(ch==="S") start={r,c}; if(ch==="G") goal={r,c};
+    }
+
+    const grid = el("div","maze-grid");
+    grid.style.position="relative";
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    const cellEls = {};
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      const ch = grid0[r][c];
+      const cell = el("div","maze-cell");
+      cell.dataset.rc = r+"-"+c;
+      if(ch==="#"){ cell.classList.add("puddle"); cell.textContent="💧"; }
+      else if(ch==="G"){ cell.classList.add("goal"); cell.textContent="🏰"; }
+      else cell.classList.add("path");
+      cell.onclick = ()=>onCellTap(r,c,cell);
+      grid.appendChild(cell);
+      cellEls[r+"-"+c] = cell;
+    }
+    field.appendChild(grid);
+
+    const uni = el("div","unicorn","🦄");
+    grid.appendChild(uni);
+
+    let pos = { r:start.r, c:start.c };
+    const walkable = (r,c)=> r>=0&&c>=0&&r<rows&&c<cols && grid0[r][c] !== "#";
+
+    function placeUnicorn(hop){
+      const cell = cellEls[pos.r+"-"+pos.c];
+      uni.style.left = (cell.offsetLeft + cell.offsetWidth/2) + "px";
+      uni.style.top  = (cell.offsetTop + cell.offsetHeight/2) + "px";
+      if(hop){ uni.classList.remove("uni-hop"); void uni.offsetWidth; uni.classList.add("uni-hop"); }
+    }
+    function highlightNext(){
+      Object.values(cellEls).forEach(c=>c.classList.remove("next"));
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc])=>{
+        const nr=pos.r+dr, nc=pos.c+dc;
+        if(walkable(nr,nc)) cellEls[nr+"-"+nc].classList.add("next");
+      });
+    }
+    function onCellTap(r,c,cell){
+      Audio.unlock();
+      const adj = Math.abs(r-pos.r)+Math.abs(c-pos.c) === 1;
+      if(!adj) return;
+      if(!walkable(r,c)){ // puddle → gentle splash
+        cell.classList.remove("splash"); void cell.offsetWidth; cell.classList.add("splash");
+        Audio.encourage(); haptic(12); return;
+      }
+      pos = {r,c};
+      placeUnicorn(true);
+      Audio.tap(); haptic(6);
+      const rect = cell.getBoundingClientRect();
+      Sparkles.burst(rect.left+rect.width/2, rect.top+rect.height/2, 5, "✨");
+      if(r===goal.r && c===goal.c){
+        Object.values(cellEls).forEach(x=>x.classList.remove("next"));
+        Audio.fanfare(); haptic([8,30,8]);
+        Sparkles.burst(rect.left+rect.width/2, rect.top+rect.height/2, 16, "⭐");
+        setTimeout(()=>{ if(round+1<MAZES.length){ round++; layout(); } else finishGame(key); }, 1100);
+      } else {
+        highlightNext();
+      }
+    }
+
+    requestAnimationFrame(()=>{ placeUnicorn(false); highlightNext(); });
+  }
+
+  requestAnimationFrame(layout);
+  return s;
+}
+
+/* ================================================================== */
+/* GAME — Starflower Count  (counting · numeral recognition)           */
+/* ================================================================== */
+/* A meadow blooms with N starflowers. Tap each to count it (the number
+   is spoken as it blooms), then tap the numeral card that matches how
+   many there are. Wrong cards shake gently; there is no fail. */
+const STAR_COUNTS = [3, 4, 5, 6];
+const STAR_BLOOMS = ["🌸","🌼","🌷","🌺","💐","🌻"];
+
+function StarflowerScreen(key){
+  let round = 0;
+  const s = el("div","screen");
+  const hud = el("div"); hud.id="gameHud";
+  const back = el("button","iconbtn","‹"); back.style.background="var(--peri)";
+  back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
+  const prompt = el("div","prompt","How many flowers? 🌸");
+  const dots = el("div","dots"); STAR_COUNTS.forEach(()=>dots.appendChild(el("i")));
+  hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
+  s.appendChild(hud);
+
+  const field = el("div"); field.id="starField";
+  s.appendChild(field);
+
+  function updateDots(){ [...dots.children].forEach((d,i)=>d.classList.toggle("on", i<=round)); }
+
+  function layout(){
+    field.innerHTML="";
+    updateDots();
+    const count = STAR_COUNTS[round];
+
+    const meadow = el("div","meadow");
+    const counter = el("div","count-bubble","Tap to count!");
+    meadow.appendChild(counter);
+    field.appendChild(meadow);
+
+    // Scatter flowers in a loose grid so they don't overlap
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+    let bloomed = 0;
+    const flowers = [];
+    for(let i=0;i<count;i++){
+      const gx = i % cols, gy = Math.floor(i / cols);
+      const x = ((gx + 0.5)/cols)*70 + 15 + (Math.random()*8-4);
+      const y = ((gy + 0.5)/rows)*70 + 14 + (Math.random()*8-4);
+      const f = el("div","flower", STAR_BLOOMS[i % STAR_BLOOMS.length]);
+      f.style.left = x+"%"; f.style.top = y+"%";
+      f.onclick = ()=>{
+        if(f.classList.contains("bloomed")) return;
+        f.classList.add("bloomed"); bloomed++;
+        Audio.unlock(); Audio.sparkle(); haptic(5); speak(String(bloomed));
+        counter.textContent = bloomed;
+        const r=f.getBoundingClientRect(); Sparkles.burst(r.left+r.width/2, r.top+r.height/2, 5, "✨");
+      };
+      meadow.appendChild(f);
+      flowers.push(f);
+    }
+
+    // Numeral options
+    const opts = new Set([count]);
+    while(opts.size < 3){ const d = count + (Math.floor(Math.random()*5)-2); if(d>=1 && d<=9) opts.add(d); }
+    const numrow = el("div","numrow");
+    let done = false;
+    shuffle([...opts]).forEach(n=>{
+      const card = el("div","numcard", String(n));
+      card.onclick = ()=>{
+        if(done) return;
+        Audio.unlock();
+        if(n === count){
+          done = true;
+          Audio.chime(); haptic([8,30,8]); speak(`${count}. ${count} flowers!`);
+          flowers.forEach((f,i)=> setTimeout(()=>{ f.classList.add("bloomed");
+            const r=f.getBoundingClientRect(); Sparkles.burst(r.left+r.width/2, r.top+r.height/2, 5, "⭐"); }, i*90));
+          counter.textContent = count;
+          setTimeout(()=>{ if(round+1<STAR_COUNTS.length){ round++; layout(); } else finishGame(key); }, 1500);
+        } else {
+          Audio.encourage(); haptic(12);
+          card.classList.add("shake"); setTimeout(()=>card.classList.remove("shake"), 430);
+        }
+      };
+      numrow.appendChild(card);
+    });
+    field.appendChild(numrow);
+  }
+
+  requestAnimationFrame(layout);
+  return s;
+}
+
 /* ------------------------------------------------------------------ */
 /* BOOT                                                               */
 /* ------------------------------------------------------------------ */
@@ -1770,7 +2019,7 @@ window.addEventListener("pointerdown", ()=>Audio.unlock(), {once:true});
 // little burst of stars right under the finger (audio comes from the
 // element's own handler). The CSS :active squish handles the "bulge".
 document.addEventListener("pointerdown", (e)=>{
-  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card, .opt");
+  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card, .opt, .maze-cell, .flower, .numcard");
   if(t){ Sparkles.burst(e.clientX, e.clientY, 7, Math.random()<0.5 ? "⭐" : "✨"); }
 }, {passive:true});
 
