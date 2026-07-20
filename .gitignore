@@ -1,0 +1,10 @@
+# dependencies
+node_modules/
+
+# generated intermediates (rebuilt by the build scripts)
+build/emblem_icon.html
+
+# os / editor cruft
+.DS_Store
+*.log
+Thumbs.db

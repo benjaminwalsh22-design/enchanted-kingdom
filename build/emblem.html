@@ -1,0 +1,113 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;padding:0}#wrap{width:1024px;height:1024px}</style></head>
+<body>
+<div id="wrap">
+<svg id="emblem" width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%"  stop-color="#fff0fb"/>
+      <stop offset="42%" stop-color="#e7c9ff"/>
+      <stop offset="72%" stop-color="#b39bff"/>
+      <stop offset="100%" stop-color="#7d6cf0"/>
+    </radialGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#ff8fd0"/>
+      <stop offset="45%" stop-color="#b06bff"/>
+      <stop offset="100%" stop-color="#2fd0e6"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff2b0"/>
+      <stop offset="50%" stop-color="#ffcf3a"/>
+      <stop offset="100%" stop-color="#f2a400"/>
+    </linearGradient>
+    <linearGradient id="horn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#ffe9a8"/>
+      <stop offset="100%" stop-color="#ffc94d"/>
+    </linearGradient>
+    <linearGradient id="tail" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7bffe4"/>
+      <stop offset="55%" stop-color="#2ad2e6"/>
+      <stop offset="100%" stop-color="#4aa8ff"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".85"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity=".15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#5a3ea8" flood-opacity="0.35"/>
+    </filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="6"/></filter>
+    <radialGradient id="emGlow" cx="50%" cy="52%" r="56%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- rounded-square app background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <!-- soft central glow so the crest pops -->
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#emGlow)"/>
+  <!-- ambient sparkle dust -->
+  <g fill="#ffffff" opacity=".8">
+    <circle cx="180" cy="240" r="6"/><circle cx="850" cy="300" r="8"/>
+    <circle cx="150" cy="640" r="5"/><circle cx="884" cy="700" r="6"/>
+    <circle cx="512" cy="120" r="4"/>
+  </g>
+
+  <!-- unicorn horn (rises above the shield), thicker with a spiral twist -->
+  <g filter="url(#soft)">
+    <path d="M512 92 L560 360 L464 360 Z" fill="url(#horn)" stroke="#f2a400" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M470 344 L556 330 M476 300 L550 286 M482 256 L544 244 M488 212 L536 202 M496 168 L528 160 M502 128 L522 122"
+          stroke="#e79a00" stroke-width="9" stroke-linecap="round" opacity=".9"/>
+    <path d="M512 100 L536 232" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".55"/>
+  </g>
+
+  <!-- shield -->
+  <g filter="url(#soft)">
+    <path d="M300 300 Q300 250 350 250 L674 250 Q724 250 724 300 L724 566
+             Q724 742 512 856 Q300 742 300 566 Z"
+          fill="url(#shield)" stroke="url(#gold)" stroke-width="26" stroke-linejoin="round"/>
+    <!-- top gloss -->
+    <path d="M320 300 Q320 272 352 272 L672 272 Q704 272 704 300 L704 430
+             Q512 486 320 430 Z" fill="url(#gloss)"/>
+  </g>
+
+  <!-- tiara across the shield -->
+  <g filter="url(#soft)">
+    <path d="M356 452 L410 384 L468 452 L512 372 L556 452 L614 384 L668 452
+             Q668 486 632 486 L392 486 Q356 486 356 452 Z"
+          fill="url(#gold)" stroke="#e79a00" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="410" cy="384" r="15" fill="#ff5fa8" stroke="#fff" stroke-width="4"/>
+    <circle cx="512" cy="372" r="17" fill="#38dcf0" stroke="#fff" stroke-width="4"/>
+    <circle cx="614" cy="384" r="15" fill="#8a5cff" stroke="#fff" stroke-width="4"/>
+    <rect x="372" y="486" width="280" height="20" rx="10" fill="url(#gold)" stroke="#e79a00" stroke-width="5"/>
+  </g>
+
+  <!-- mermaid tail (lower shield) -->
+  <g filter="url(#soft)">
+    <path d="M512 528
+             C540 566 540 616 520 660
+             C566 636 636 636 682 690
+             C636 700 590 690 560 726
+             C548 700 524 690 512 690
+             C500 690 476 700 464 726
+             C434 690 388 700 342 690
+             C388 636 458 636 504 660
+             C484 616 484 566 512 528 Z"
+          fill="url(#tail)" stroke="#1596b8" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M512 560 C528 592 528 628 514 654" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".7" fill="none"/>
+    <circle cx="512" cy="700" r="10" fill="#ffffff" opacity=".85"/>
+  </g>
+
+  <!-- outer sparkles (4-point stars) -->
+  <g fill="url(#gold)" stroke="#fff" stroke-width="3">
+    <path d="M792 402 l14 40 40 14 -40 14 -14 40 -14 -40 -40 -14 40 -14 Z"/>
+    <path d="M214 452 l11 32 32 11 -32 11 -11 32 -11 -32 -32 -11 32 -11 Z"/>
+    <path d="M300 792 l9 26 26 9 -26 9 -9 26 -9 -26 -26 -9 26 -9 Z"/>
+    <path d="M726 800 l11 32 32 11 -32 11 -11 32 -11 -32 -32 -11 32 -11 Z"/>
+  </g>
+</svg>
+</div>
+</body></html>
