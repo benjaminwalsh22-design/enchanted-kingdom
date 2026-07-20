@@ -28,13 +28,16 @@ iPad/iPhone Home Screen; it runs full-screen and works offline.
     three gentle rounds (3 → 4 → 5 pairs). No timer, no fail.
   - **Crown Jewels** — tap the gem that continues a repeating jewel-necklace pattern
     (AB → ABC → AAB → ABB). Early patterning / sequencing.
+  - **King & Mermaid** — the King 👑 and the Mermaid 🧜‍♀️ each have a pile of treasure;
+    tap whoever has *more* (or *fewer*). Counts reveal so she can check by counting.
+    Comparing quantities / number sense.
 - 🦄 **Enchanted Forest** (Unicorn Realm) — *playable*
   - **Rainbow Bridge** — hop the unicorn tile-by-tile along the grassy path to the castle,
     around the puddles. Valid tiles glow; puddles just splash. Mazes / spatial reasoning.
   - **Starflower Count** — tap glowing flowers to count them (the number is spoken), then
     tap the matching numeral card. Counting + numeral recognition.
 
-**All three realms are now playable — seven mini-games in total.** 🎉
+**All three realms are now playable — eight mini-games in total.** 🎉
 
 Every game draws a **fresh random set of levels** from a larger pool each play
 (different letters, patterns, mazes, counts and problems), so it stays

@@ -458,6 +458,34 @@
   .count-bubble{ position:absolute; top:6px; left:50%; transform:translateX(-50%);
      background:rgba(255,255,255,.85); border-radius:999px; padding:6px 18px; font-weight:900;
      font-size:clamp(18px,3.4vw,24px); color:var(--ink); box-shadow:0 6px 14px rgba(40,140,80,.28); }
+
+  /* ---------- King & Mermaid (compare more/fewer) ---------- */
+  #cmpField{ position:relative; flex:1; overflow:hidden; display:flex; align-items:stretch;
+     justify-content:center; gap:min(4vw,30px);
+     padding:calc(84px + env(safe-area-inset-top)) 4vw 5vh;
+     background:radial-gradient(120% 80% at 50% -8%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%),
+       linear-gradient(180deg,#ffe7bd 0%, #ffc7e6 48%, #d9b8ff 100%); }
+  .cmp-side{ flex:1 1 0; max-width:46vw; border-radius:30px; cursor:pointer; position:relative;
+     display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 12px;
+     border:4px solid rgba(255,255,255,.9); box-shadow:0 12px 26px rgba(120,60,160,.3);
+     transition:transform .12s; }
+  .cmp-side:active{ transform:scale(.97); }
+  .cmp-side.king{ background:linear-gradient(180deg,#fff4da,#ffe0a3); }
+  .cmp-side.mermaid{ background:linear-gradient(180deg,#dcf8ff,#a9eeff); }
+  .cmp-char{ font-size:min(15vw,74px); line-height:1; filter:drop-shadow(0 4px 6px rgba(0,0,0,.22)); }
+  .cmp-gems{ display:flex; flex-wrap:wrap; gap:min(1.6vw,9px); justify-content:center;
+     align-content:center; flex:1; max-width:92%; }
+  .cmp-gem{ width:min(7.5vw,40px); height:min(7.5vw,40px); border-radius:50%;
+     background:radial-gradient(circle at 36% 30%, #ffffff, #ffe08a 58%, #f0b53a);
+     border:2px solid rgba(255,255,255,.9); box-shadow:0 3px 6px rgba(160,120,20,.4); }
+  .cmp-num{ font-size:min(11vw,48px); font-weight:900; color:var(--ink); line-height:1;
+     min-height:.9em; opacity:0; transition:opacity .3s; }
+  .cmp-num.show{ opacity:1; }
+  .cmp-side.win{ animation:cmpWin .6s ease; }
+  @keyframes cmpWin{ 0%,100%{transform:scale(1)} 40%{transform:scale(1.06);
+     box-shadow:0 0 0 5px rgba(255,206,58,.75), 0 12px 26px rgba(120,60,160,.3);} }
+  .cmp-side.shake{ animation:shake .42s; }
+  .cmp-word{ color:var(--magenta); }
 </style>
 </head>
 <body>
@@ -513,6 +541,7 @@ const TREASURES = {
   bubbleLantern:  {name:"Bubble Lantern",   emoji:"🏮", tint:"#ffeeb3"},
   rainbowGem:     {name:"Rainbow Gem",      emoji:"🌈", tint:"#c6f0ff"},
   starFlower:     {name:"Star Flower",      emoji:"🌸", tint:"#ffd6ec"},
+  trident:        {name:"Golden Trident",   emoji:"🔱", tint:"#ffe9a8"},
 };
 
 /* Three realms of the Enchanted Kingdom. Each has an accent gradient + icon. */
@@ -544,6 +573,9 @@ const GAMES = {
   crownPatterns:{ realm:"castle", title:"Crown Jewels", tagline:"Make the pattern shine!",
     goal:"Repeating patterns · sequencing", emoji:"👑",
     tint:"linear-gradient(160deg,#ffab3d,#ff7a3d)", pearls:5, treasure:"bubbleLantern", playable:true },
+  royalTreasure:{ realm:"castle", title:"King & Mermaid", tagline:"Who has more treasure?",
+    goal:"Comparing · more & fewer", emoji:"🔱",
+    tint:"linear-gradient(160deg,#8a5cff,#5b2fd6)", pearls:5, treasure:"trident", playable:true },
 
   /* --- Enchanted Forest (coming soon, styled) --- */
   rainbowBridge:{ realm:"forest", title:"Rainbow Bridge", tagline:"Guide the unicorn home!",
@@ -1472,6 +1504,7 @@ function launchGame(key){
   if(key === "runeShellTracing") return RuneTracingScreen(key);
   if(key === "royalGemMatch") return RoyalGemScreen(key);
   if(key === "crownPatterns") return CrownJewelsScreen(key);
+  if(key === "royalTreasure") return KingMermaidScreen(key);
   if(key === "rainbowBridge") return RainbowBridgeScreen(key);
   if(key === "starflowerCount") return StarflowerScreen(key);
   return GameScreen(key);            // bubbleSortReef
@@ -2064,6 +2097,93 @@ function StarflowerScreen(key){
   return s;
 }
 
+/* ================================================================== */
+/* GAME — King & Mermaid  (comparing quantities · more / fewer)        */
+/* ================================================================== */
+/* The King 👑 and the Mermaid 🧜‍♀️ each have a pile of golden treasure.
+   Tap whoever has MORE (or FEWER). The counts reveal on a correct answer
+   so she can check by counting. Wrong taps shake gently — no fail. */
+const CMP_POOL = [
+  { ask:"more",  king:5, mermaid:3 },
+  { ask:"more",  king:2, mermaid:5 },
+  { ask:"more",  king:6, mermaid:4 },
+  { ask:"more",  king:3, mermaid:6 },
+  { ask:"more",  king:4, mermaid:1 },
+  { ask:"fewer", king:4, mermaid:6 },
+  { ask:"fewer", king:5, mermaid:2 },
+  { ask:"fewer", king:2, mermaid:5 },
+];
+
+function KingMermaidScreen(key){
+  const rounds = shuffle(CMP_POOL).slice(0, 5);
+  let idx = 0;
+
+  const s = el("div","screen");
+  const hud = el("div"); hud.id="gameHud";
+  const back = el("button","bubble-btn tappable","‹");
+  back.onclick=()=>{ Audio.swoosh(); backToRealm(); };
+  const prompt = el("div","prompt","");
+  const dots = el("div","dots"); rounds.forEach(()=>dots.appendChild(el("i")));
+  hud.appendChild(back); hud.appendChild(prompt); hud.appendChild(dots);
+  s.appendChild(hud);
+
+  const field = el("div"); field.id="cmpField";
+  s.appendChild(field);
+
+  function updateDots(){ [...dots.children].forEach((d,i)=>d.classList.toggle("on", i<=idx)); }
+
+  function side(kind, char, count){
+    const wrap = el("div","cmp-side "+kind); wrap.dataset.side = kind;
+    wrap.appendChild(el("div","cmp-char", char));
+    const gems = el("div","cmp-gems");
+    for(let i=0;i<count;i++) gems.appendChild(el("div","cmp-gem"));
+    wrap.appendChild(gems);
+    wrap.appendChild(el("div","cmp-num", String(count)));
+    return wrap;
+  }
+
+  function layout(){
+    field.innerHTML="";
+    const R = rounds[idx];
+    const word = R.ask === "more" ? "MORE" : "FEWER";
+    prompt.innerHTML = `Who has <span class="cmp-word">${word}</span>? 👑🧜‍♀️`;
+    updateDots();
+
+    const kingSide = side("king", "🤴", R.king);
+    const merSide  = side("mermaid", "🧜‍♀️", R.mermaid);
+    field.appendChild(kingSide);
+    field.appendChild(merSide);
+
+    const correct = R.ask === "more"
+      ? (R.king > R.mermaid ? "king" : "mermaid")
+      : (R.king < R.mermaid ? "king" : "mermaid");
+
+    let done = false;
+    function choose(sideEl){
+      if(done) return;
+      Audio.unlock();
+      if(sideEl.dataset.side === correct){
+        done = true;
+        // reveal both counts so she can check by counting
+        field.querySelectorAll(".cmp-num").forEach(n=>n.classList.add("show"));
+        sideEl.classList.add("win");
+        Audio.chime(); haptic([8,30,8]);
+        const r = sideEl.getBoundingClientRect();
+        Sparkles.burst(r.left+r.width/2, r.top+r.height*0.4, 14, "⭐");
+        setTimeout(()=>{ if(idx+1<rounds.length){ idx++; layout(); } else finishGame(key); }, 1500);
+      } else {
+        Audio.encourage(); haptic(12);
+        sideEl.classList.add("shake"); setTimeout(()=>sideEl.classList.remove("shake"), 430);
+      }
+    }
+    kingSide.onclick = ()=>choose(kingSide);
+    merSide.onclick  = ()=>choose(merSide);
+  }
+
+  requestAnimationFrame(layout);
+  return s;
+}
+
 /* ------------------------------------------------------------------ */
 /* BOOT                                                               */
 /* ------------------------------------------------------------------ */
@@ -2074,7 +2194,7 @@ window.addEventListener("pointerdown", ()=>Audio.unlock(), {once:true});
 // little burst of stars right under the finger (audio comes from the
 // element's own handler). The CSS :active squish handles the "bulge".
 document.addEventListener("pointerdown", (e)=>{
-  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card, .opt, .maze-cell, .flower, .numcard");
+  const t = e.target.closest(".tappable, .bigbtn, .bubble-btn, .cove, .activity, .realm, .trayitem, .basket, .clam, .gem-card, .opt, .maze-cell, .flower, .numcard, .cmp-side");
   if(t){ Sparkles.burst(e.clientX, e.clientY, 7, Math.random()<0.5 ? "⭐" : "✨"); }
 }, {passive:true});
 
